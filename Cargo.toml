@@ -1,0 +1,41 @@
+[package]
+name = "btree_dag"
+version = "0.2.2"
+authors = ["James Spears <james.w.spears@gmail.com>"]
+edition = "2018"
+autotests = false
+license = "MIT OR Apache-2.0"
+description = "A generic dag (undirected graph) data structure."
+homepage = "https://github.com/jameone/btree_dag"
+repository = "https://github.com/jameone/btree_dag"
+keywords = ["dag", "generic"]
+categories = ["data-structures", "no-std"]
+readme = "README.md"
+
+[[test]]
+name = "integration"
+path = "tests/lib.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+serde_cbor = ["try_encoding_from/cbor"]
+serde_json = ["try_encoding_from/json"]
+serde_yaml = ["try_encoding_from/yaml"]
+fmt = []
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"], default-features = false, optional = true }
+try_encoding_from = { version = "0.1", default-features = false, optional = true }
+
+[dev-dependencies]
+criterion = "0.3.3"
+
+[[bench]]
+name = "benchmark"
+path = "benches/lib.rs"
+harness = false
+
+[profile.release]
+# or "z"
+opt-level = "z"

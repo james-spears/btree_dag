@@ -1,0 +1,27 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - cd $CODEBUILD_SRC_DIR
+      - rustup update stable
+      - rustup default stable
+  build:
+    commands:
+      - echo Build started on `date`
+      - cargo build --all-features --verbose --workspace
+      - cargo test --all-features --verbose --workspace
+      - cargo kcov -- --include-pattern="$(pwd)" --exclude-pattern=test.rs
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Packaging library
+      - cargo login $CARGO_LOGIN_TOKEN
+      - cargo package --all-features
+      - echo Attempting to publish to crates.io
+      - echo This fowllowing command will never fail please read output
+      - (cargo publish && echo Publish to crates.io SUCCESS) || (true && echo Publish to crates.io FAILED)
+artifacts:
+  files:
+    - cov/**/*
+  base-directory: $CODEBUILD_SRC_DIR/target
