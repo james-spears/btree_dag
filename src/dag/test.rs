@@ -117,6 +117,16 @@ mod unit_tests {
 
         assert!(dag.add_edge(2, 1).is_err());
 
+        dag.add_vertex(3);
+        dag.add_vertex(4);
+        dag.add_vertex(5);
+
+        dag.add_edge(2, 3)?;
+        dag.add_edge(3, 4)?;
+        dag.add_edge(4, 5)?;
+
+        assert!(dag.add_edge(5, 1).is_err());
+
         // Tests passed.
         Ok(())
     }
