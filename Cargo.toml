@@ -1,6 +1,6 @@
 [package]
 name = "btree_dag"
-version = "0.2.2"
+version = "0.1.0"
 authors = ["James Spears <james.w.spears@gmail.com>"]
 edition = "2018"
 autotests = false
