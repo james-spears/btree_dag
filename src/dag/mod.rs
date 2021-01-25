@@ -29,6 +29,27 @@ where
         let vertices: BTreeMap<T, BTreeSet<T>> = BTreeMap::new();
         BTreeDag { vertices }
     }
+
+    fn cyclic_relationship_exists(&self, x: &T, y: &T) -> Result<(), Error> {
+        if let Some(adj_y) = self.vertices.get(y) {
+            // If y has adjacent vertices, then have we need to
+            // check if x exists in these adjacent vertices;
+            if !adj_y.contains(x) {
+                // if it does not, then recurse. Making sure x
+                // is not adjacent to any of y's adjacent vertices.
+                for adj in adj_y {
+                    self.cyclic_relationship_exists(x, adj)?;
+                }
+                // If no error has been thrown by this line, then
+                // we must not have found x in any of the adjacency lists.
+                return Ok(());
+            }
+            return Err(Error::EdgeExistsError);
+        }
+        // If y has no adjacent vertices, then we can be sure there
+        // no circular relationship.
+        Ok(())
+    }
 }
 
 impl<T> Default for BTreeDag<T>
@@ -65,11 +86,9 @@ where
 {
     type Error = Error;
     fn add_edge(&mut self, x: T, y: T) -> Result<(), Self::Error> {
-        if let Some(adj_y) = self.vertices.get(&y) {
+        if self.vertices.get(&y).is_some() {
             if let Some(adj_x) = self.vertices.get(&x) {
-                if adj_y.contains(&x) {
-                    return Err(Error::EdgeExistsError);
-                }
+                self.cyclic_relationship_exists(&x, &y)?;
                 // Add y to x's adjacency list.
                 let mut adj_x: BTreeSet<T> = adj_x.clone();
                 adj_x.insert(y.clone());
@@ -105,13 +124,8 @@ where
                 let mut adj_x = adj_x.clone();
                 adj_x.remove(&y);
 
-                // // Remove x from y's adjacency list.
-                // let mut adj_y = adj_y.clone();
-                // adj_y.remove(&x);
-
                 // Update vertices.
                 self.vertices.insert(x, adj_x);
-                // self.vertices.insert(y, adj_y);
                 return Ok(());
             }
         }
