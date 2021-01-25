@@ -228,6 +228,8 @@ mod unit_tests {
         let exp_edges: BTreeSet<usize> = BTreeSet::new();
         assert_eq!(dag.get_vertex_value(2).unwrap(), &exp_edges);
 
+        assert!(dag.remove_edge(0, 10).is_err());
+
         // Test passed.
         Ok(())
     }

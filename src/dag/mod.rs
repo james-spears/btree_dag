@@ -48,7 +48,7 @@ where
         }
         // If y has no adjacent vertices, then we can be sure there
         // no circular relationship.
-        Ok(())
+        Err(Error::VertexDoesNotExist)
     }
 }
 
@@ -86,16 +86,14 @@ where
 {
     type Error = Error;
     fn add_edge(&mut self, x: T, y: T) -> Result<(), Self::Error> {
-        if self.vertices.get(&y).is_some() {
-            if let Some(adj_x) = self.vertices.get(&x) {
-                self.cyclic_relationship_exists(&x, &y)?;
-                // Add y to x's adjacency list.
-                let mut adj_x: BTreeSet<T> = adj_x.clone();
-                adj_x.insert(y.clone());
+        if let Some(adj_x) = self.vertices.get(&x) {
+            self.cyclic_relationship_exists(&x, &y)?;
+            // Add y to x's adjacency list.
+            let mut adj_x: BTreeSet<T> = adj_x.clone();
+            adj_x.insert(y.clone());
 
-                self.vertices.insert(x, adj_x);
-                return Ok(());
-            }
+            self.vertices.insert(x, adj_x);
+            return Ok(());
         }
         Err(Error::VertexDoesNotExist)
     }
