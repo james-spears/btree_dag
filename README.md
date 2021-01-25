@@ -36,6 +36,9 @@ fn main() {
     
     // Assert relationship now exists.
     assert!(dag.adjacdent(String::from("Tarzan"), String::from("Jane")));
+    
+    // Adding a bidirectional edge is not allowed.
+    assert!(dag.add_edge(String::from("Jane"), String::from("Tarzan"))?.is_err());
 }
 ```
 

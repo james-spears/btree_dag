@@ -115,6 +115,8 @@ mod unit_tests {
             Error::EdgeExistsError
         );
 
+        assert!(dag.add_edge(2, 1).is_err());
+
         // Tests passed.
         Ok(())
     }
