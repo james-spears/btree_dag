@@ -56,7 +56,7 @@ where
 /// ```
 pub trait AddEdge<T> {
     type Error;
-    fn add_edge(&mut self, x: T, y: T) -> Result<(), Self::Error>;
+    fn add_edge(&mut self, x: T, y: T) -> Result<Option<BTreeSet<T>>, Self::Error>;
 }
 
 /// `GetVertexValue` returns the value associated with the vertex x.
@@ -103,7 +103,7 @@ where
 /// ```
 pub trait RemoveEdge<T> {
     type Error;
-    fn remove_edge(&mut self, x: T, y: T) -> Result<(), Self::Error>;
+    fn remove_edge(&mut self, x: T, y: T) -> Result<Option<BTreeSet<T>>, Self::Error>;
 }
 
 /// `RemoveVertex` removes the vertex x, if it is there.
@@ -131,7 +131,7 @@ where
     T: Ord,
 {
     type Error;
-    fn remove_vertex(&mut self, x: T) -> Result<(), Self::Error>;
+    fn remove_vertex(&mut self, x: T) -> Result<Option<BTreeSet<T>>, Self::Error>;
 }
 
 /// `Adjacent` tests whether there is an edge from the vertex x to the vertex y.

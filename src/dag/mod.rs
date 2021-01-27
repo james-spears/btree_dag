@@ -85,15 +85,14 @@ where
     T: Ord + Clone,
 {
     type Error = Error;
-    fn add_edge(&mut self, x: T, y: T) -> Result<(), Self::Error> {
+    fn add_edge(&mut self, x: T, y: T) -> Result<Option<BTreeSet<T>>, Self::Error> {
         if let Some(adj_x) = self.vertices.get(&x) {
             self.cyclic_relationship_exists(&x, &y)?;
             // Add y to x's adjacency list.
             let mut adj_x: BTreeSet<T> = adj_x.clone();
-            adj_x.insert(y.clone());
+            adj_x.insert(y);
 
-            self.vertices.insert(x, adj_x);
-            return Ok(());
+            return Ok(self.vertices.insert(x, adj_x));
         }
         Err(Error::VertexDoesNotExist)
     }
@@ -115,7 +114,7 @@ where
     T: Ord + Clone,
 {
     type Error = Error;
-    fn remove_edge(&mut self, x: T, y: T) -> Result<(), Self::Error> {
+    fn remove_edge(&mut self, x: T, y: T) -> Result<Option<BTreeSet<T>>, Self::Error> {
         if self.vertices.get(&y).is_some() {
             if let Some(adj_x) = self.vertices.get(&x) {
                 // Remove y from x's adjacency list.
@@ -123,8 +122,7 @@ where
                 adj_x.remove(&y);
 
                 // Update vertices.
-                self.vertices.insert(x, adj_x);
-                return Ok(());
+                return Ok(self.vertices.insert(x, adj_x));
             }
         }
         Err(Error::VertexDoesNotExist)
@@ -137,16 +135,16 @@ where
     T: Ord + Clone,
 {
     type Error = Error;
-    fn remove_vertex(&mut self, x: T) -> Result<(), Self::Error> {
+    fn remove_vertex(&mut self, x: T) -> Result<Option<BTreeSet<T>>, Self::Error> {
         self.vertices
             .clone()
             .into_iter()
             .filter(|v| -> bool { v.1.contains(&x) })
-            .try_for_each(|v| { self.remove_edge(v.0.clone(), x.clone()) })?;
+            .try_for_each(|v| -> Result<(), Self::Error> { self.remove_edge(v.0, x.clone())?; Ok(()) })?;
         // At this point, no other vertices should point to x,
         // and so x can be removed.
-        self.vertices.remove(&x);
-        Ok(())
+
+        Ok(self.vertices.remove(&x))
     }
 }
 
