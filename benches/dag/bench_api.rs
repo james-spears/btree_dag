@@ -1,9 +1,9 @@
-use btree_dag::error::Error;
+use btree_dag::Error;
 use btree_dag::*;
 use criterion::{black_box, Criterion};
 
-fn setup() -> Result<BTreeDag<String>, Error> {
-    let mut dag: BTreeDag<String> = BTreeDag::new();
+fn setup() -> Result<BTreeDAG<String>, Error> {
+    let mut dag: BTreeDAG<String> = BTreeDAG::new();
     dag.add_vertex(String::from("0"));
     dag.add_vertex(String::from("1"));
     dag.add_vertex(String::from("2"));
@@ -72,9 +72,7 @@ fn setup() -> Result<BTreeDag<String>, Error> {
 
 pub fn clone_benchmark(c: &mut Criterion) {
     let dag = setup().unwrap();
-    c.bench_function("dag::dag clone", |b| {
-        b.iter(|| black_box(dag.clone()))
-    });
+    c.bench_function("dag::dag clone", |b| b.iter(|| black_box(dag.clone())));
 }
 
 pub fn vertices_benchmark(c: &mut Criterion) {
@@ -108,10 +106,9 @@ pub fn add_edge_benchmark(c: &mut Criterion) {
 
 pub fn get_vertex_value_benchmark(c: &mut Criterion) {
     let dag = setup().unwrap();
-    c.bench_function(
-        "dag::api::GetVertexValue (vertex does not exist)",
-        |b| b.iter(|| black_box(dag.get_vertex_value(String::from("10")))),
-    );
+    c.bench_function("dag::api::GetVertexValue (vertex does not exist)", |b| {
+        b.iter(|| black_box(dag.get_vertex_value(String::from("10"))))
+    });
 
     c.bench_function("dag::api::GetVertexValue (vertex exists)", |b| {
         b.iter(|| black_box(dag.get_vertex_value(String::from("0"))))

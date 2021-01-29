@@ -7,27 +7,27 @@ use core::default::Default;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+use crate::Error;
 pub use api::*;
-use crate::error::Error;
 
-/// `BTreeDag` is an implementation of a directed acyclic graph (abstract data structure)
+/// `BTreeDAG` is an implementation of a directed acyclic graph (abstract data structure)
 /// which utilizes `BTreeMap` for the vertex adjacency list.
 #[derive(PartialEq, Eq, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct BTreeDag<T>
+pub struct BTreeDAG<T>
 where
     T: Ord,
 {
     vertices: BTreeMap<T, BTreeSet<T>>,
 }
 
-impl<T> BTreeDag<T>
+impl<T> BTreeDAG<T>
 where
     T: Ord,
 {
     pub fn new() -> Self {
         let vertices: BTreeMap<T, BTreeSet<T>> = BTreeMap::new();
-        BTreeDag { vertices }
+        BTreeDAG { vertices }
     }
 
     fn cyclic_relationship_exists(&self, x: &T, y: &T) -> Result<(), Error> {
@@ -44,7 +44,7 @@ where
                 // we must not have found x in any of the adjacency lists.
                 return Ok(());
             }
-            return Err(Error::EdgeExistsError);
+            return Err(Error::EdgeExists);
         }
         // If y has no adjacent vertices, then we can be sure there
         // no circular relationship.
@@ -52,7 +52,7 @@ where
     }
 }
 
-impl<T> Default for BTreeDag<T>
+impl<T> Default for BTreeDAG<T>
 where
     T: Ord,
 {
@@ -61,7 +61,7 @@ where
     }
 }
 
-impl<T> Vertices<T> for BTreeDag<T>
+impl<T> Vertices<T> for BTreeDAG<T>
 where
     T: Ord,
 {
@@ -70,7 +70,7 @@ where
     }
 }
 
-impl<T> AddVertex<T> for BTreeDag<T>
+impl<T> AddVertex<T> for BTreeDAG<T>
 where
     T: Ord,
 {
@@ -80,25 +80,25 @@ where
 }
 
 /// When you add an edge, you should make sure that the x, and y vertices exist.
-impl<T> AddEdge<T> for BTreeDag<T>
+impl<T> AddEdge<T> for BTreeDAG<T>
 where
     T: Ord + Clone,
 {
     type Error = Error;
-    fn add_edge(&mut self, x: T, y: T) -> Result<Option<BTreeSet<T>>, Self::Error> {
+    fn add_edge(&mut self, x: T, y: T) -> Result<BTreeSet<T>, Self::Error> {
         if let Some(adj_x) = self.vertices.get(&x) {
             self.cyclic_relationship_exists(&x, &y)?;
             // Add y to x's adjacency list.
             let mut adj_x: BTreeSet<T> = adj_x.clone();
             adj_x.insert(y);
 
-            return Ok(self.vertices.insert(x, adj_x));
+            return Ok(self.vertices.insert(x, adj_x).unwrap());
         }
         Err(Error::VertexDoesNotExist)
     }
 }
 
-impl<T> GetVertexValue<T> for BTreeDag<T>
+impl<T> GetVertexValue<T> for BTreeDAG<T>
 where
     T: Ord,
 {
@@ -109,20 +109,21 @@ where
 
 /// When an edge is removed, you should find the incident vertex and ensure the edge
 /// is removed from the vertex's adjacency list.
-impl<T> RemoveEdge<T> for BTreeDag<T>
+impl<T> RemoveEdge<T> for BTreeDAG<T>
 where
     T: Ord + Clone,
 {
     type Error = Error;
-    fn remove_edge(&mut self, x: T, y: T) -> Result<Option<BTreeSet<T>>, Self::Error> {
+    fn remove_edge(&mut self, x: T, y: T) -> Result<BTreeSet<T>, Self::Error> {
         if self.vertices.get(&y).is_some() {
             if let Some(adj_x) = self.vertices.get(&x) {
                 // Remove y from x's adjacency list.
-                let mut adj_x = adj_x.clone();
-                adj_x.remove(&y);
+                let mut updated_adj_x = adj_x.clone();
+                updated_adj_x.remove(&y);
 
-                // Update vertices.
-                return Ok(self.vertices.insert(x, adj_x));
+                // Update vertices. Since we have already verified x is in vertices,
+                // we can safely unwrap.
+                return Ok(self.vertices.insert(x, updated_adj_x).unwrap());
             }
         }
         Err(Error::VertexDoesNotExist)
@@ -130,25 +131,32 @@ where
 }
 
 /// When you remove a vertex, you should ensure there are no dangling edges.
-impl<T> RemoveVertex<T> for BTreeDag<T>
+impl<T> RemoveVertex<T> for BTreeDAG<T>
 where
     T: Ord + Clone,
 {
     type Error = Error;
-    fn remove_vertex(&mut self, x: T) -> Result<Option<BTreeSet<T>>, Self::Error> {
+    fn remove_vertex(&mut self, x: T) -> Result<BTreeSet<T>, Self::Error> {
+        // The remove edge method will error with EdgeDoesNotExist on the
+        // first iteration is in fact x does not exist.
         self.vertices
             .clone()
             .into_iter()
             .filter(|v| -> bool { v.1.contains(&x) })
-            .try_for_each(|v| -> Result<(), Self::Error> { self.remove_edge(v.0, x.clone())?; Ok(()) })?;
+            .try_for_each(|v| -> Result<(), Self::Error> {
+                self.remove_edge(v.0, x.clone())?;
+                Ok(())
+            })?;
         // At this point, no other vertices should point to x,
         // and so x can be removed.
 
-        Ok(self.vertices.remove(&x))
+        // We can be sure that if there has not been an error thrown by now,
+        // then x definitely exists in then vertices, so it is safe to unwrap.
+        Ok(self.vertices.remove(&x).unwrap())
     }
 }
 
-impl<T> Adjacent<T> for BTreeDag<T>
+impl<T> Adjacent<T> for BTreeDAG<T>
 where
     T: Ord,
 {
@@ -166,11 +174,22 @@ where
     }
 }
 
-impl<T> Connections<T> for BTreeDag<T>
+impl<T> Connections<T> for BTreeDAG<T>
 where
     T: Ord,
 {
     fn connections(&self, x: T) -> Option<&BTreeSet<T>> {
         self.vertices.get(&x)
+    }
+}
+
+impl<T> Prune<T> for BTreeDAG<T> where T: Ord + Clone {
+    type Error = Error;
+    fn prune(&mut self, x: T) -> Result<(), Self::Error> {
+        let child_vertices = self.remove_vertex(x)?;
+        for vertex in child_vertices {
+            self.prune(vertex)?;
+        }
+        Ok(())
     }
 }

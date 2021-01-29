@@ -5,8 +5,8 @@ use alloc::collections::BTreeSet;
 /// # Example
 ///
 /// ```
-/// use btree_dag::{BTreeDag, AddVertex, Vertices};
-/// let mut dag: BTreeDag<String> = BTreeDag::new();
+/// use btree_dag::{BTreeDAG, AddVertex, Vertices};
+/// let mut dag: BTreeDAG<String> = BTreeDAG::new();
 ///
 /// assert_eq!(dag.vertices().len(), 0);
 /// ```
@@ -22,11 +22,12 @@ where
 /// # Example
 ///
 /// ```
-/// use btree_dag::{BTreeDag, AddVertex, Vertices};
-/// let mut dag: BTreeDag<String> = BTreeDag::new();
+/// use btree_dag::{BTreeDAG, AddVertex, Vertices};
+/// let mut dag: BTreeDAG<String> = BTreeDAG::new();
 /// dag.add_vertex(String::from("origin"));
 ///
 /// assert_eq!(dag.vertices().len(), 1);
+/// assert!(dag.vertices().contains(&String::from("origin")));
 /// ```
 pub trait AddVertex<T>
 where
@@ -42,9 +43,9 @@ where
 /// ```
 /// extern crate alloc;
 /// use alloc::collections::btree_set::BTreeSet;
-/// use btree_dag::{BTreeDag, AddVertex, AddEdge, GetVertexValue};
-/// use btree_dag::error::Error;
-/// let mut dag: BTreeDag<String> = BTreeDag::new();
+/// use btree_dag::{BTreeDAG, AddVertex, AddEdge, GetVertexValue};
+/// use btree_dag::Error;
+/// let mut dag: BTreeDAG<String> = BTreeDAG::new();
 /// dag.add_vertex(String::from("origin"));
 /// dag.add_vertex(String::from("destination"));
 /// dag.add_edge(String::from("origin"), String::from("destination"));
@@ -56,7 +57,7 @@ where
 /// ```
 pub trait AddEdge<T> {
     type Error;
-    fn add_edge(&mut self, x: T, y: T) -> Result<Option<BTreeSet<T>>, Self::Error>;
+    fn add_edge(&mut self, x: T, y: T) -> Result<BTreeSet<T>, Self::Error>;
 }
 
 /// `GetVertexValue` returns the value associated with the vertex x.
@@ -66,8 +67,8 @@ pub trait AddEdge<T> {
 /// ```
 /// extern crate alloc;
 /// use alloc::collections::btree_set::BTreeSet;
-/// use btree_dag::{BTreeDag, AddVertex, AddEdge, GetVertexValue};
-/// let mut dag: BTreeDag<String> = BTreeDag::new();
+/// use btree_dag::{BTreeDAG, AddVertex, AddEdge, GetVertexValue};
+/// let mut dag: BTreeDAG<String> = BTreeDAG::new();
 /// dag.add_vertex(String::from("origin"));
 /// dag.add_vertex(String::from("destination"));
 /// dag.add_edge(String::from("origin"), String::from("destination"));
@@ -87,8 +88,8 @@ where
 /// # Example
 ///
 /// ```
-/// use btree_dag::{BTreeDag, AddVertex, AddEdge, RemoveEdge, GetVertexValue};
-/// let mut dag: BTreeDag<String> = BTreeDag::new();
+/// use btree_dag::{BTreeDAG, AddVertex, AddEdge, RemoveEdge, GetVertexValue};
+/// let mut dag: BTreeDAG<String> = BTreeDAG::new();
 /// dag.add_vertex(String::from("origin"));
 /// dag.add_vertex(String::from("destination"));
 /// dag.add_edge(String::from("origin"), String::from("destination"));
@@ -103,7 +104,7 @@ where
 /// ```
 pub trait RemoveEdge<T> {
     type Error;
-    fn remove_edge(&mut self, x: T, y: T) -> Result<Option<BTreeSet<T>>, Self::Error>;
+    fn remove_edge(&mut self, x: T, y: T) -> Result<BTreeSet<T>, Self::Error>;
 }
 
 /// `RemoveVertex` removes the vertex x, if it is there.
@@ -113,8 +114,8 @@ pub trait RemoveEdge<T> {
 /// ```
 /// extern crate alloc;
 /// use alloc::collections::btree_set::BTreeSet;
-/// use btree_dag::{BTreeDag, AddVertex, AddEdge, RemoveVertex, GetVertexValue, Vertices};
-/// let mut dag: BTreeDag<String> = BTreeDag::new();
+/// use btree_dag::{BTreeDAG, AddVertex, AddEdge, RemoveVertex, GetVertexValue, Vertices};
+/// let mut dag: BTreeDAG<String> = BTreeDAG::new();
 /// dag.add_vertex(String::from("origin"));
 /// dag.add_vertex(String::from("destination"));
 /// dag.add_edge(String::from("origin"), String::from("destination"));
@@ -122,7 +123,7 @@ pub trait RemoveEdge<T> {
 ///
 /// dag.remove_vertex(String::from("destination"));
 /// assert_eq!(dag.vertices().len(), 1);
-///
+/// assert!(dag.vertices().contains(&String::from("origin")));
 /// // Note: removing a vertex will also cascade delete any incident edges.
 /// assert_eq!(dag.get_vertex_value(String::from("origin")).unwrap().len(), 0);
 /// ```
@@ -131,7 +132,7 @@ where
     T: Ord,
 {
     type Error;
-    fn remove_vertex(&mut self, x: T) -> Result<Option<BTreeSet<T>>, Self::Error>;
+    fn remove_vertex(&mut self, x: T) -> Result<BTreeSet<T>, Self::Error>;
 }
 
 /// `Adjacent` tests whether there is an edge from the vertex x to the vertex y.
@@ -142,9 +143,9 @@ where
 /// # Example
 ///
 /// ```
-/// use btree_dag::{BTreeDag, AddVertex, AddEdge, Adjacent};
-/// use btree_dag::error::Error;
-/// let mut dag: BTreeDag<String> = BTreeDag::new();
+/// use btree_dag::{BTreeDAG, AddVertex, AddEdge, Adjacent};
+/// use btree_dag::Error;
+/// let mut dag: BTreeDAG<String> = BTreeDAG::new();
 /// dag.add_vertex(String::from("origin"));
 /// dag.add_vertex(String::from("destination"));
 /// dag.add_edge(String::from("origin"), String::from("destination"));
@@ -154,7 +155,7 @@ where
 /// // can be phrased, if there exists a relationship from x to y. Therefore
 /// // A and B adjacent implies B and A cannot be adjacent.
 /// let err: Error = dag.add_edge(String::from("destination"), String::from("origin")).unwrap_err();
-/// assert_eq!(err, Error::EdgeExistsError)
+/// assert_eq!(err, Error::EdgeExists)
 /// ```
 pub trait Adjacent<T> {
     type Error;
@@ -167,8 +168,8 @@ pub trait Adjacent<T> {
 /// # Example
 ///
 /// ```
-/// use btree_dag::{BTreeDag, AddVertex, AddEdge, Connections};
-/// let mut dag: BTreeDag<String> = BTreeDag::new();
+/// use btree_dag::{BTreeDAG, AddVertex, AddEdge, Connections};
+/// let mut dag: BTreeDAG<String> = BTreeDAG::new();
 /// dag.add_vertex(String::from("origin"));
 /// dag.add_vertex(String::from("destination"));
 /// dag.add_edge(String::from("origin"), String::from("destination"));
@@ -177,4 +178,35 @@ pub trait Adjacent<T> {
 /// ```
 pub trait Connections<T> {
     fn connections(&self, x: T) -> Option<&BTreeSet<T>>;
+}
+
+/// `Prune` remove vertex x and recursively remove all children
+/// of x. Prune will error if x does not exists, and by `BTreeDAG`'s
+/// contract, all recursive calls cannot error.
+///
+/// # Example
+///
+/// ```
+/// use btree_dag::{BTreeDAG, AddVertex, AddEdge, Connections, Prune, Vertices, GetVertexValue};
+/// use std::collections::BTreeSet;
+/// let mut dag: BTreeDAG<String> = BTreeDAG::new();
+/// dag.add_vertex(String::from("origin"));
+/// dag.add_vertex(String::from("waypoint"));
+/// dag.add_vertex(String::from("destination_A"));
+/// dag.add_vertex(String::from("destination_B"));
+///
+/// dag.add_edge(String::from("origin"), String::from("waypoint"));
+/// dag.add_edge(String::from("waypoint"), String::from("destination_A"));
+/// dag.add_edge(String::from("waypoint"), String::from("destination_B"));
+///
+/// dag.prune(String::from("waypoint"));
+///
+/// assert_eq!(dag.vertices().len(), 1);
+/// assert!(dag.vertices().contains(&String::from("origin")));
+/// let remaining_children_of_origin: BTreeSet<String> = BTreeSet::new();
+/// assert_eq!(dag.get_vertex_value(String::from("origin")).unwrap(), &remaining_children_of_origin);
+/// ```
+pub trait Prune<T> {
+    type Error;
+    fn prune(&mut self, x: T) -> Result<(), Self::Error>;
 }

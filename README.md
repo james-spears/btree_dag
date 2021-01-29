@@ -24,10 +24,10 @@ is required for reason the implementation relies on `BTreeMap`
 
 ## Example
 ```rust
-use crate::BTreeDag;
+use crate::BTreeDAG;
 
 fn main() {
-    let mut dag: BTreeDag<String> = BTreeDag::new();
+    let mut dag: BTreeDAG<String> = BTreeDAG::new();
     // Add nodes.
     dag.add_vertex(String::from("Tarzan"));
     dag.add_vertex(String::from("Jane"));

@@ -19,14 +19,15 @@ path = "tests/lib.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-serde_cbor = ["try_encoding_from/cbor"]
-serde_json = ["try_encoding_from/json"]
-serde_yaml = ["try_encoding_from/yaml"]
+serde_cbor = ["try_encoding_from/cbor", "btree_error/cbor"]
+serde_json = ["try_encoding_from/json", "btree_error/json"]
+serde_yaml = ["try_encoding_from/yaml", "btree_error/yaml"]
 fmt = []
 
 [dependencies]
+btree_error = { path = "../btree_error" }
+try_encoding_from = { path = "../try_encoding_from", version = "0.1", default-features = false, optional = true }
 serde = { version = "1.0", features = ["derive"], default-features = false, optional = true }
-try_encoding_from = { version = "0.1", default-features = false, optional = true }
 
 [dev-dependencies]
 criterion = "0.3.3"
