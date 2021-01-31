@@ -1,0 +1,19 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - cd $CODEBUILD_SRC_DIR
+      - rustup default stable
+  build:
+    commands:
+      - echo Test coverage started on `date`
+      - cargo test --all-features --verbose
+      - cargo kcov --features "serde serde_cbor serde_json serde_yaml" -- --include-pattern="$(pwd)" --exclude-pattern=test.rs
+  post_build:
+    commands:
+      - echo Test coverage completed on `date`
+artifacts:
+  files:
+    - cov/**/*
+  base-directory: $CODEBUILD_SRC_DIR/target
