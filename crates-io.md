@@ -1,6 +1,6 @@
 # Binary Tree Dag (btree_dag)
 
-[![CodeBuild]][CodeBuild]
+![CodeBuild]
 [![Version badge]][crates.io]
 [![Docs badge]][docs.rs]
 
