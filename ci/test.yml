@@ -3,7 +3,6 @@ version: 0.2
 phases:
   pre_build:
     commands:
-      - cd $CODEBUILD_SRC_DIR
       - rustup default stable
   build:
     commands:
@@ -16,4 +15,4 @@ phases:
 artifacts:
   files:
     - cov/**/*
-  base-directory: $CODEBUILD_SRC_DIR/target
+  base-directory: ./target
